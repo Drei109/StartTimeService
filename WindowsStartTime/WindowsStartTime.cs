@@ -2,6 +2,7 @@
 using Quartz.Impl;
 using System;
 using System.Configuration;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.ServiceProcess;
@@ -94,6 +95,7 @@ namespace WindowsStartTime
         {
             using (var client = new HttpClient())
             {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 client.BaseAddress = new Uri(baseAddress);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -112,6 +114,7 @@ namespace WindowsStartTime
         {
             using (var client = new HttpClient())
             {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 client.BaseAddress = new Uri(baseAddress);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -142,6 +145,7 @@ namespace WindowsStartTime
             {
                 using (var client = new HttpClient())
                 {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     client.BaseAddress = new Uri(baseAddress);
                     client.DefaultRequestHeaders.Accept.Clear();
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
