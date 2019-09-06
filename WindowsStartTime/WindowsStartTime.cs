@@ -59,9 +59,9 @@ namespace WindowsStartTime
 
         protected override void OnStart(string[] args)
         {
-            RunAsyncStart().Wait();
+            RunAsyncMethod(1, createAddress).Wait();
+            //RunAsyncStart().Wait();
             RunAsyncJobs().Wait();
-            //RunTimer();
         }
 
         protected override void OnStop()
@@ -84,13 +84,32 @@ namespace WindowsStartTime
 
             if (changeDescription.Reason == SessionChangeReason.SessionLogon)
             {
-                RunAsyncStart().Wait();
+                RunAsyncMethod(1, createAddress).Wait();
+                //RunAsyncStart().Wait();
             }
 
             base.OnSessionChange(changeDescription);
         }
 
         //Async Methods
+        private static async Task RunAsyncMethod(int tipo, string direccion)
+        {
+            using (var client = new HttpClient())
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                client.BaseAddress = new Uri(baseAddress);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var registroNuevo = new Registro()
+                {
+                    local_id = localId,
+                    tipo = tipo
+                };
+                HttpResponseMessage response = await client.PostAsJsonAsync(direccion, registroNuevo).ConfigureAwait(false);
+            }
+        }
+
         private static async Task RunAsyncStart()
         {
             using (var client = new HttpClient())
@@ -133,7 +152,6 @@ namespace WindowsStartTime
         {
             IScheduler sched = await factory.GetScheduler().ConfigureAwait(false);
             await sched.Start().ConfigureAwait(false);
-
             await sched.ScheduleJob(jobStart, triggerCheckStartUpTime).ConfigureAwait(false);
             await sched.ScheduleJob(jobUpdate, triggerUpdateTurnOffTime).ConfigureAwait(false);
         }
@@ -165,7 +183,8 @@ namespace WindowsStartTime
         {
             public async Task Execute(IJobExecutionContext context)
             {
-                await RunAsyncStart().ConfigureAwait(false);
+                await RunAsyncMethod(1, createAddress).ConfigureAwait(false);
+                //await RunAsyncStart().ConfigureAwait(false);
             }
         }
     }
