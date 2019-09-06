@@ -2,9 +2,11 @@
 using Quartz.Impl;
 using System;
 using System.Configuration;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.NetworkInformation;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 
@@ -19,7 +21,13 @@ namespace WindowsStartTime
         private static readonly string createAddress = ConfigurationManager.AppSettings["createAddress"];
         private static readonly string updateAddress = ConfigurationManager.AppSettings["updateAddress"];
         private static readonly int timeInterval = Convert.ToInt32(ConfigurationManager.AppSettings["timeInterval"]);
+        private static readonly int tipo = Convert.ToInt32(ConfigurationManager.AppSettings["tipo"]);
         public static string nombreServicio = "WindowsStartTime";
+
+        private static readonly string macAddress = (from nic in NetworkInterface.GetAllNetworkInterfaces()
+                                                     where nic.OperationalStatus == OperationalStatus.Up
+                                                     select nic.GetPhysicalAddress().ToString()
+                                            ).FirstOrDefault();
 
         //Quartz
         private static readonly StdSchedulerFactory factory = new StdSchedulerFactory();
@@ -60,18 +68,17 @@ namespace WindowsStartTime
         protected override void OnStart(string[] args)
         {
             RunAsyncMethod(1, createAddress).Wait();
-            //RunAsyncStart().Wait();
             RunAsyncJobs().Wait();
         }
 
         protected override void OnStop()
         {
-            RunAsyncStop().Wait();
+            RunAsyncMethod(2, updateAddress).Wait();
         }
 
         protected override void OnShutdown()
         {
-            RunAsyncStop().Wait();
+            RunAsyncMethod(2, updateAddress).Wait();
             base.OnShutdown();
         }
 
@@ -79,7 +86,7 @@ namespace WindowsStartTime
         {
             if (changeDescription.Reason == SessionChangeReason.SessionLogoff)
             {
-                RunAsyncStop().Wait();
+                RunAsyncMethod(2, updateAddress).Wait();
             }
 
             if (changeDescription.Reason == SessionChangeReason.SessionLogon)
@@ -92,7 +99,7 @@ namespace WindowsStartTime
         }
 
         //Async Methods
-        private static async Task RunAsyncMethod(int tipo, string direccion)
+        private static async Task RunAsyncMethod(int estado, string direccion)
         {
             using (var client = new HttpClient())
             {
@@ -103,48 +110,11 @@ namespace WindowsStartTime
 
                 var registroNuevo = new Registro()
                 {
-                    local_id = localId,
-                    tipo = tipo
+                    estado = estado,
+                    mac = macAddress,
+                    tipo_id = tipo
                 };
                 HttpResponseMessage response = await client.PostAsJsonAsync(direccion, registroNuevo).ConfigureAwait(false);
-            }
-        }
-
-        private static async Task RunAsyncStart()
-        {
-            using (var client = new HttpClient())
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                client.BaseAddress = new Uri(baseAddress);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                // HTTP POST
-                var registroNuevo = new Registro()
-                {
-                    local_id = localId,
-                    tipo = 1
-                };
-                HttpResponseMessage response = await client.PostAsJsonAsync(createAddress, registroNuevo).ConfigureAwait(false);
-            }
-        }
-
-        private static async Task RunAsyncStop()
-        {
-            using (var client = new HttpClient())
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                client.BaseAddress = new Uri(baseAddress);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                // HTTP UPDATE
-                var registroNuevo = new Registro()
-                {
-                    local_id = localId,
-                    tipo = 2
-                };
-                HttpResponseMessage response = await client.PostAsJsonAsync(updateAddress, registroNuevo).ConfigureAwait(false);
             }
         }
 
@@ -161,21 +131,7 @@ namespace WindowsStartTime
         {
             public async Task Execute(IJobExecutionContext context)
             {
-                using (var client = new HttpClient())
-                {
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                    client.BaseAddress = new Uri(baseAddress);
-                    client.DefaultRequestHeaders.Accept.Clear();
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                    // HTTP UPDATE
-                    var registroNuevo = new Registro()
-                    {
-                        local_id = localId,
-                        tipo = 1
-                    };
-                    HttpResponseMessage response = await client.PostAsJsonAsync(updateAddress, registroNuevo).ConfigureAwait(false);
-                }
+                await RunAsyncMethod(1, updateAddress).ConfigureAwait(false);
             }
         }
 

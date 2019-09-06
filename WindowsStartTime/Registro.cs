@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace WindowsStartTime
 {
-    class Registro
+    internal class Registro
     {
         public int local_id { get; set; }
-        public int tipo { get; set; }
+        public int estado { get; set; }
+        public string mac { get; set; }
+        public int tipo_id { get; set; }
     }
 }

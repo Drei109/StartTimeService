@@ -42,4 +42,3 @@ D:\Drei\ProyectosD\StarTimeService\WindowsStartTime\obj\Release\WindowsStartTime
 D:\Drei\ProyectosD\StarTimeService\WindowsStartTime\obj\Release\WindowsStartTime.csproj.CopyComplete
 D:\Drei\ProyectosD\StarTimeService\WindowsStartTime\obj\Release\WindowsStartTime.exe
 D:\Drei\ProyectosD\StarTimeService\WindowsStartTime\obj\Release\WindowsStartTime.pdb
-D:\Drei\ProyectosD\StarTimeService\WindowsStartTime\obj\Release\WindowsStartTime.csprojAssemblyReference.cache
